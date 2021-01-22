@@ -1,0 +1,3 @@
+* SDP Backend
+This repository contains all of the backend systems for the SPD project.
+Mainly this is the system that allows communication between the frontend, whether this is a mobile app or webapp, and the robot.
