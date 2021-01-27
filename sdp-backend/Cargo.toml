@@ -1,0 +1,16 @@
+[package]
+name = "sdp-backend"
+version = "0.1.0"
+authors = ["Kyle Cotton <kylecottonkc@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = "0.4.6"
+
+
+[dependencies.rocket_contrib]
+version = "0.4.6"
+default-features = false
+features = ["serve"]
