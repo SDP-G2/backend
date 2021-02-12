@@ -14,3 +14,5 @@ rocket = "0.4.6"
 version = "0.4.6"
 default-features = false
 features = ["serve"]
+chrono = { version = "0.4", features = ["serde"] }
+sqlx = { version = "0.4.2", features = ["postgres", "offline", "runtime-tokio-native-tls", "time", "chrono"] }
