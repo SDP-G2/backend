@@ -38,6 +38,7 @@ pub enum Instruction {
     Task(CleaningPattern),
     Idle,
 }
+
 impl Command {
     pub async fn new(
         conn: &PgPool,
@@ -91,5 +92,21 @@ impl Command {
             instruction: instruction.clone(),
             completed: false,
         })
+    }
+}
+impl Command {
+    // Idle task the current task with the given reason
+    pub async fn idle(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
+        // Create a new command with the current time
+        let time_now = chrono::Utc::now();
+
+        Ok(Command::new(
+            conn,
+            robot_serial_number,
+            time_now,
+            time_now,
+            &Instruction::Idle,
+        )
+        .await?)
     }
 }
