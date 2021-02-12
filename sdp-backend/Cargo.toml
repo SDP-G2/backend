@@ -7,10 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = "0.4.6"
-
-
-[dependencies.rocket_contrib]
-version = "0.4.6"
-default-features = false
-features = ["serve"]
+actix-web = "3"
+actix-files = "0.5.0"
+env_logger = "0.8.0"
+dotenv = "0.10"
