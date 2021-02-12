@@ -33,6 +33,11 @@ reset-database:
 wipe-database:
 	rm -rf ./database/volume/*
 
+update-static:
+	-rm -rf ./sdp-backend/static
+	-git clone https://github.com/SDP-G2/frontend.git ./sdp-backend/static
+	-rm -rf ./sdp-backend/static/.git
+
 set-env:
 	export PORT=8080
 	export DATABASE_URL=postgres://postgres:password@localhost/sdp
