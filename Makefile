@@ -27,6 +27,9 @@ migrations-run:
 migrations-reset:
 	psql -U postgres -d sdp -h localhost --single-transaction -a -f database/down.sql
 
+reset-database:
+	psql -U postgres -d sdp -h localhost --single-transaction -a -f database/reset.sql
+
 wipe-database:
 	rm -rf ./database/volume/*
 
