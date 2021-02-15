@@ -1,8 +1,8 @@
-use actix_web::HttpResponse;
+use actix_web::{dev::Body, http::StatusCode, HttpResponse, ResponseError};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ApiError {
     CommandNotInTimeIssuedBuffer,
     DatabaseConnFailed,
@@ -42,5 +42,21 @@ impl From<ApiError> for HttpResponse {
             ApiError::SerializationError => HttpResponse::InternalServerError().json(error_json),
             ApiError::AuthenticationFailed => HttpResponse::Unauthorized().json(error_json),
         }
+    }
+}
+
+impl ResponseError for ApiError {
+    fn status_code(&self) -> StatusCode {
+        let error: ApiError = self.clone();
+        let res: HttpResponse = error.into();
+
+        res.status()
+    }
+
+    fn error_response(&self) -> HttpResponse<Body> {
+        let error: ApiError = self.clone();
+        let res: HttpResponse = error.into();
+
+        res.into_body()
     }
 }
