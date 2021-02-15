@@ -1,4 +1,5 @@
 use crate::command::{Command, Instruction};
+use crate::user::User;
 
 use actix_web::{get, post, web, web::Data, HttpResponse};
 use chrono::{serde::ts_seconds, Utc};
@@ -16,10 +17,14 @@ pub struct CommandRequest {
 }
 
 #[post("/command")]
-pub async fn create_command(conn: Data<PgPool>, cmd: web::Json<CommandRequest>) -> HttpResponse {
+pub async fn create_command(
+    conn: Data<PgPool>,
+    user: User,
+    cmd: web::Json<CommandRequest>,
+) -> HttpResponse {
     Command::new(
         &conn,
-        &cmd.robot_serial_number,
+        &user.robot_serial_number,
         cmd.time_issued,
         cmd.time_instruction,
         &cmd.instruction,
@@ -27,5 +32,3 @@ pub async fn create_command(conn: Data<PgPool>, cmd: web::Json<CommandRequest>) 
     .await
     .map_or_else(|e| e.into(), |cmd| HttpResponse::Ok().json(cmd))
 }
-
-// #[get("/command")]

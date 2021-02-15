@@ -4,6 +4,7 @@ use sqlx::postgres::PgPool;
 use std::env;
 
 mod api;
+mod auth;
 mod command;
 mod error;
 mod poll;
@@ -35,6 +36,7 @@ async fn main() -> std::io::Result<()> {
             .service(api::user::create_user)
             .service(api::command::create_command)
             .service(api::poll::robot_poll)
+            .service(api::auth::auth)
     })
     .bind(address)?
     .run()

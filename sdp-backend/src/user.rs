@@ -4,12 +4,12 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     user_id: i64,
-    user_name: String,
+    pub user_name: String,
     password_hash: String,
-    robot_serial_number: String,
+    pub robot_serial_number: String,
 }
 
 impl User {
