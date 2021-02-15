@@ -7,10 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = { version = "0.4", features = ["serde"] }
-sqlx = { version = "0.4.2", features = ["postgres", "offline", "runtime-tokio-native-tls", "time", "chrono"] }
 actix-web = "3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0.59"}
+actix-cors = "0.5.0"
 actix-files = "0.5.0"
 env_logger = "0.8.0"
+chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.10"
-
+sqlx = { version = "0.4.2", features = ["postgres", "offline", "runtime-tokio-native-tls", "time", "chrono"] }
+bcrypt = "0.9.0"
