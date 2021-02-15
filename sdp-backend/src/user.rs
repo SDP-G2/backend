@@ -1,5 +1,6 @@
 use crate::error::ApiError;
 use crate::robot::Robot;
+use bcrypt::{hash, verify, DEFAULT_COST};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 
@@ -50,5 +51,40 @@ RETURNING user_id
             password_hash,
             robot_serial_number,
         })
+    }
+
+    pub async fn search_by_username(
+        conn: &PgPool,
+        user_name: &str,
+    ) -> Result<Option<Self>, ApiError> {
+        sqlx::query!(
+            r#"
+SELECT * FROM users U
+WHERE U.user_name = $1
+"#,
+            user_name
+        )
+        .fetch_optional(conn)
+        .await
+        .map(|user| {
+            user.map(|u| Self {
+                user_id: u.user_id,
+                user_name: u.user_name,
+                password_hash: u.password_hash,
+                robot_serial_number: u.robot_serial_number,
+            })
+        })
+        .map_err(|_| ApiError::DatabaseConnFailed)
+    }
+
+    pub async fn login(conn: &PgPool, user_name: &str, password: &str) -> Result<Self, ApiError> {
+        let user = Self::search_by_username(&conn, user_name)
+            .await?
+            .ok_or(ApiError::LoginFailedUserNotExist)?;
+
+        match verify(&password, &user.password_hash) {
+            Ok(verified) if verified => Ok(user),
+            _ => Err(ApiError::LoginFailedPasswordIncorrect),
+        }
     }
 }
