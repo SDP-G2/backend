@@ -1,5 +1,6 @@
 use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ApiError {
@@ -12,6 +13,13 @@ pub enum ApiError {
     RobotInitializationFailed,
     SerializationError,
     AuthenticationFailed,
+}
+
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let error_json = serde_json::to_string(&self).unwrap_or(String::new());
+        write!(f, "{}", error_json)
+    }
 }
 
 impl From<ApiError> for HttpResponse {
