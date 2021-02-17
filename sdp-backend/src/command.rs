@@ -126,15 +126,6 @@ WHERE C1.robot_serial_number = $1 AND
         })
     }
 
-    // pub async fn update(
-    //     conn: &PgPool,
-    //     robot_serial_number: &str,
-    //     time_issued: chrono::DateTime<Utc>,
-    //     time_instruction: chrono::DateTime<Utc>,
-    //     instruction: &Instruction,
-    // ) -> Result<Self, ApiError> {
-    //     todo!();
-    // }
     pub fn valid_time_instruction(&self) -> bool {
         let time_difference = (chrono::Utc::now() - self.time_instruction)
             .num_seconds()
@@ -179,21 +170,27 @@ impl Command {
         .await?)
     }
 
-    pub async fn task(
+    // pub async fn task// (
+    //     conn: &PgPool,
+    //     robot_serial_number: &str,
+    //     cleaning_pattern: &CleaningPattern,
+    // )
+    // -> Result<Self, ApiError> // {
+    //     // Create a new command with the current time
+    //     let time_now = chrono::Utc::now();
+
+    //     Ok(Command::new(
+    //         conn,
+    //         robot_serial_number,
+    //         time_now,
+    //         time_now,
+    //         &Instruction::Task(cleaning_pattern.clone()),
+    //     )
+    //     .await?)
+    // }
         conn: &PgPool,
         robot_serial_number: &str,
-        cleaning_pattern: &CleaningPattern,
-    ) -> Result<Self, ApiError> {
-        // Create a new command with the current time
-        let time_now = chrono::Utc::now();
 
-        Ok(Command::new(
-            conn,
-            robot_serial_number,
-            time_now,
-            time_now,
-            &Instruction::Task(cleaning_pattern.clone()),
         )
-        .await?)
     }
 }
