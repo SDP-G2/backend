@@ -224,9 +224,61 @@ impl Command {
     //     )
     //     .await?)
     // }
+}
+
+impl Command {
+    pub async fn get_all_commands(
         conn: &PgPool,
         robot_serial_number: &str,
-
+    ) -> Result<Vec<Command>, ApiError> {
+        sqlx::query!(
+            r#"
+SELECT * FROM Commands C
+WHERE C.robot_serial_number = $1
+ORDER BY C.time_instruction DESC
+               "#,
+            robot_serial_number
         )
+        .fetch_all(conn)
+        .await
+        .map(|cmds| {
+            let mut pending = Vec::new();
+
+            for c in cmds {
+                pending.push(Self {
+                    command_id: c.command_id,
+                    robot_serial_number: c.robot_serial_number,
+                    time_issued: c.time_issued,
+                    time_instruction: c.time_issued,
+                    instruction: serde_json::from_str(&c.instruction)
+                        .unwrap_or(Instruction::Abort(AbortReason::Saftey)),
+                    completed: c.completed,
+                })
+            }
+            pending
+        })
+        .map_err(|_| ApiError::DatabaseConnFailed)
+    }
+
+    pub async fn get_by_id(conn: &PgPool, command_id: i64) -> Result<Command, ApiError> {
+        sqlx::query!(
+            r#"
+SELECT * FROM Commands C
+WHERE C.command_id = $1
+               "#,
+            command_id
+        )
+        .fetch_one(conn)
+        .await
+        .map(|c| Self {
+            command_id: c.command_id,
+            robot_serial_number: c.robot_serial_number,
+            time_issued: c.time_issued,
+            time_instruction: c.time_issued,
+            instruction: serde_json::from_str(&c.instruction)
+                .unwrap_or(Instruction::Abort(AbortReason::Saftey)),
+            completed: c.completed,
+        })
+        .map_err(|_| ApiError::DatabaseConnFailed)
     }
 }
