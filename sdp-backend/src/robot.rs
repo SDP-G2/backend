@@ -18,7 +18,7 @@ VALUES ($1)
         .map_err(|_| ApiError::RobotInitializationFailed)?;
 
         // By default a new robot will be in idle.
-        Command::idle(conn, robot_serial_number).await?;
+        // Command::idle(conn, robot_serial_number).await?;
 
         Ok(())
     }
