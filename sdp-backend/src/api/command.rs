@@ -8,7 +8,7 @@ use sqlx::postgres::PgPool;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CommandRequest {
-    robot_serial_number: String,
+    // robot_serial_number: String,
     #[serde(with = "ts_seconds")]
     time_issued: chrono::DateTime<Utc>,
     #[serde(with = "ts_seconds")]
