@@ -17,7 +17,6 @@ chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.10"
 sqlx = { version = "0.4.2", features = ["postgres", "offline", "runtime-tokio-native-tls", "time", "chrono"] }
 bcrypt = "0.9.0"
-futures-util = "0.3.12"
 jsonwebtoken = "7.2.0"
 futures = "0.3.12"
-tokio = { version = "1.2.0", features = ["rt-multi-thread"]}
+actix-rt = "1.0.2"
