@@ -5,6 +5,7 @@ use sqlx::postgres::PgPool;
 
 // TODO: Set this to a sensible value
 const TIME_ISSUED_BUFFER: i64 = 1000;
+const TIME_INSTRUCTION_BUFFER: i64 = 1000;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Command {
@@ -132,6 +133,13 @@ WHERE C1.robot_serial_number = $1) MaxTimeIssued
     // ) -> Result<Self, ApiError> {
     //     todo!();
     // }
+    pub fn valid_time_instruction(&self) -> bool {
+        let time_difference = (chrono::Utc::now() - self.time_instruction)
+            .num_seconds()
+            .abs();
+
+        time_difference < TIME_INSTRUCTION_BUFFER
+    }
 }
 
 impl Command {
