@@ -126,6 +126,42 @@ WHERE C1.robot_serial_number = $1 AND
         })
     }
 
+    /// Checks to see if there are any pending command for this robot
+    pub async fn pending(
+        conn: &PgPool,
+        robot_serial_number: &str,
+    ) -> Result<Option<Command>, ApiError> {
+        let mut pending_commands = Vec::new();
+        let all_cmd = Self::get_all_commands(conn, robot_serial_number).await?;
+
+        for cmd in &all_cmd {
+            if !cmd.completed {
+                pending_commands.push(cmd.clone());
+            }
+        }
+
+        match pending_commands.get(0) {
+            Some(cmd) if cmd.valid_time_instruction() => Ok(Some(cmd.clone())),
+            _ => Ok(None),
+        }
+    }
+
+    pub async fn complete(&self, conn: &PgPool) -> Result<(), ApiError> {
+        sqlx::query!(
+            r#"
+UPDATE Commands C
+SET completed = true
+WHERE C.command_id= $1
+               "#,
+            self.command_id
+        )
+        .execute(conn)
+        .await
+        .map_err(|_| ApiError::DatabaseConnFailed)?;
+
+        Ok(())
+    }
+
     pub fn valid_time_instruction(&self) -> bool {
         let time_difference = (chrono::Utc::now() - self.time_instruction)
             .num_seconds()
