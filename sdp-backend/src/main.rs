@@ -9,6 +9,7 @@ mod command;
 mod error;
 mod poll;
 mod robot;
+mod test;
 mod user;
 
 #[actix_web::main]
