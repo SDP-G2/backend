@@ -116,7 +116,8 @@ WHERE C1.robot_serial_number = $1 AND
             robot_serial_number: cmd.robot_serial_number,
             time_issued: cmd.time_issued,
             time_instruction: cmd.time_issued,
-            instruction: Instruction::Idle,
+            instruction: serde_json::from_str(&cmd.instruction)
+                .unwrap_or(Instruction::Abort(AbortReason::Saftey)),
             completed: cmd.completed,
         })
         .map_err(|e| {
