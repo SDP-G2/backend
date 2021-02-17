@@ -101,10 +101,11 @@ impl Command {
             r#"
 SELECT * FROM Commands C
 NATURAL JOIN
-(SELECT MAX(C1.time_issued) AS time_issued,
+(SELECT MIN(C1.time_instruction) AS time_instruction,
         $1 AS robot_serial_number
 FROM Commands C1
-WHERE C1.robot_serial_number = $1) MaxTimeIssued
+WHERE C1.robot_serial_number = $1 AND
+      C1.completed = false) MinTimeInstruction
                "#,
             robot_serial_number
         )
