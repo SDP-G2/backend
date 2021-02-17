@@ -9,8 +9,8 @@ const TIME_INSTRUCTION_BUFFER: i64 = 1000;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Command {
-    command_id: i64,
-    robot_serial_number: String,
+    pub command_id: i64,
+    pub robot_serial_number: String,
     #[serde(with = "ts_seconds")]
     time_issued: chrono::DateTime<Utc>,
     #[serde(with = "ts_seconds")]
