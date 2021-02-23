@@ -7,6 +7,9 @@ build-run:
 run:
 	docker-compose up
 
+update-schema:
+	cargo install sqlx-cli && cargo sqlx prepare
+
 run-db:
 	docker-compose up sdp_db
 
