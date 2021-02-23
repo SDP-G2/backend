@@ -12,7 +12,7 @@ run:
 
 # Run the database in the background, then update the schema file
 #   then build the latest image, then stop the database container
-build: run-db-background update-schema
+build: update-static run-db-background update-schema
 	docker build -t kylecotton/sdp-backend:latest sdp-backend
 	-docker stop `docker ps -aq`
 
