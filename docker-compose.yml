@@ -17,6 +17,7 @@ services:
 
   sdp_backend:
     build: ./sdp-backend/
+    image: kylecotton/sdp_backend:latest
     ports:
       - "8000:8000"
     environment:
