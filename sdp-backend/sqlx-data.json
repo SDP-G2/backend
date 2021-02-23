@@ -1,5 +1,105 @@
 {
   "db": "PostgreSQL",
+  "16fa9b421ce3b0d8af05e609376cd3b7b83023737d09ff63eb72617d7b8e647d": {
+    "query": "\nSELECT * FROM Commands C\nNATURAL JOIN\n(SELECT MIN(C1.time_instruction) AS time_instruction,\n        $1 AS robot_serial_number\nFROM Commands C1\nWHERE C1.robot_serial_number = $1 AND\n      C1.completed = false) MinTimeInstruction\n               ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "robot_serial_number",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "time_instruction",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "command_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "time_issued",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 4,
+          "name": "instruction",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "completed",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "1eb1e56adbf5d871792a864101e2afd24f315ff4df096c07cce15106916845f8": {
+    "query": "\nSELECT * FROM Commands C\nWHERE C.robot_serial_number = $1\nORDER BY C.time_instruction DESC\n               ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "command_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "robot_serial_number",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "time_issued",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "time_instruction",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 4,
+          "name": "instruction",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "completed",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "31b9827afc63c5b3a7f4a8d2e4db817ddad659a2cc3681c30c9d21ad937b063d": {
     "query": "\nINSERT INTO users (user_name, password_hash, robot_serial_number)\nVALUES ( $1, $2, $3 )\nRETURNING user_id\n        ",
     "describe": {
@@ -22,24 +122,36 @@
       ]
     }
   },
-  "3b33f0ce0e10b7dec7249f980c5a2b708a4f9f959858ac3450846dfaf6f769fb": {
-    "query": "\nSELECT * FROM Commands C\nNATURAL JOIN\n(SELECT MAX(C1.time_issued) AS time_issued,\n        $1 AS robot_serial_number\nFROM Commands C1\nWHERE C1.robot_serial_number = $1) MaxTimeIssued\n               ",
+  "79aac1836b8662e730854e2ab8bae281ce58973ab222adcd8acbb9e370979802": {
+    "query": "\nUPDATE Commands C\nSET completed = true\nWHERE C.command_id= $1\n               ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "8c3f3a118220221bfb049a1fc3c2386839d301fd730ad95218eff11c62952286": {
+    "query": "\nSELECT * FROM Commands C\nWHERE C.command_id = $1\n               ",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
+          "name": "command_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
           "name": "robot_serial_number",
           "type_info": "Varchar"
         },
         {
-          "ordinal": 1,
+          "ordinal": 2,
           "name": "time_issued",
           "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "command_id",
-          "type_info": "Int8"
         },
         {
           "ordinal": 3,
@@ -59,7 +171,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text"
+          "Int8"
         ]
       },
       "nullable": [
