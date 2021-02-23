@@ -13,32 +13,88 @@ const MINIMUM_BATTERY_LEVEL: i64 = 50;
 pub struct Poll {
     pub robot_serial_number: String,
     pub instruction: Instruction,
-    battery_level: i64,
+    pub battery_level: i64,
 }
 
 impl Poll {
-    pub async fn poll(conn: &PgPool, next_command: &Self) -> Result<Command, ApiError> {
+    pub async fn poll(conn: &PgPool, robot_status: &Self) -> Result<Command, ApiError> {
+        let mut robot_status = robot_status.clone();
+
         // Check the battery of the robot
-        if !next_command.check_battery().await {
-            return Ok(Command::abort(
-                conn,
-                &next_command.robot_serial_number,
-                &AbortReason::LowBattery,
-            )
-            .await?);
+        if !robot_status.check_battery().await {
+            robot_status.instruction = Abort(AbortReason::LowBattery);
         }
 
-        // If the new commands is the same as the previous keep doing it
-        let prev_command = Command::current(conn, &next_command.robot_serial_number).await?;
-        if &prev_command.instruction == &next_command.instruction {
-            return Ok(prev_command);
-        }
+        // Get the previous commands for the robot
+        let prev_command = Command::current(conn, &robot_status.robot_serial_number).await?;
 
-        match &next_command.instruction {
-            Abort(reason) => Command::abort(conn, &next_command.robot_serial_number, reason).await,
-            Task(task) => Command::task(conn, &next_command.robot_serial_number, task).await,
-            Idle => Command::idle(conn, &next_command.robot_serial_number).await,
-            _unsupported_instruction => Err(ApiError::CmdInstructionNotSupported),
+        // Get the pending command for the robot, if the pending is the same as the current
+        // task set it to None.
+        let pending_command =
+            match Command::pending(conn, &prev_command.robot_serial_number).await? {
+                Some(pending) if pending == prev_command => None,
+                Some(pending) => Some(pending),
+                _ => None,
+            };
+
+        // println!("\nPrev Command: {:?}\n", prev_command);
+        // println!("Pending Command: {:?}\n", pending_command);
+        // println!("Robot Status: {:?}\n", robot_status);
+
+        match (
+            &prev_command.instruction,
+            &pending_command,
+            &robot_status.instruction,
+        ) {
+            // If there are no pending commands, and the new robot state is the same as the last keep doing the previous task
+            (prev, None, new) if prev == new => {
+                // println!("--- OPTION 1 ---");
+                Ok(prev_command)
+            }
+
+            // Doing a task that has now completed, mark as complete and idle
+            (Task(_), None, Idle) => {
+                // println!("--- OPTION 2 ---");
+                prev_command.complete(conn).await.ok();
+                Command::idle(conn, &robot_status.robot_serial_number).await
+            }
+
+            // Doing a task that has now completed, mark as complete and do the pending task
+            (Task(_), Some(pending), Idle) => {
+                // println!("--- OPTION 3 ---");
+                prev_command.complete(conn).await.ok();
+                Ok(pending.clone())
+            }
+
+            // If the robot has aborted for some reason, mark the task as complete
+            // then abort
+            (_, _, Abort(reason)) => {
+                // println!("--- OPTION 4 ---");
+                prev_command.complete(conn).await.ok();
+                Command::abort(conn, &robot_status.robot_serial_number, reason).await
+            }
+
+            // IF we are previously aborted, set the state to idle
+            (Abort(_), None, Idle) => {
+                // println!("--- OPTION 5 ---");
+                prev_command.complete(conn).await.ok();
+                Command::idle(conn, &robot_status.robot_serial_number).await
+            }
+
+            // IF we are previously aborted, set the state to idle
+            (Abort(_), Some(pending), Idle) => {
+                // println!("--- OPTION 6 ---");
+                prev_command.complete(conn).await.ok();
+                Ok(pending.clone())
+            }
+
+            (Idle, Some(pending), Idle) => {
+                // println!("--- OPTION 7 ---");
+                prev_command.complete(conn).await.ok();
+                Ok(pending.clone())
+            }
+
+            _ => Err(ApiError::CmdInstructionNotSupported),
         }
     }
 
