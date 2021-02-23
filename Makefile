@@ -1,5 +1,9 @@
 .DEFAULT_GOAL := build-run
 
+# Push the latest built image to the docker hub
+push:
+	docker push kylecotton/sdp_backend:latest
+
 build-run:
 	-make build
 	-make run
@@ -8,7 +12,7 @@ run:
 	docker-compose up
 
 update-schema:
-	cargo install sqlx-cli && cargo sqlx prepare
+	cd sdp-backend && cargo install sqlx-cli && cargo sqlx prepare
 
 run-db:
 	docker-compose up sdp_db
