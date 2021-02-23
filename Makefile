@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := build-run
+.DEFAULT_GOAL := run
 
 # Push the latest built image to the docker hub
 push:
