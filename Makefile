@@ -3,7 +3,7 @@
 # --- DOCKER ---
 # Push the latest built image to the docker hub
 push:
-	docker push kylecotton/sdp_backend:latest
+	docker push kylecotton/sdp-backend:`git log -1 --format=%h`
 
 # Run the entire backend system, if the sdp_backend image is not
 #  available locally it will be fetched from the docker hub.
@@ -13,7 +13,7 @@ run:
 # Run the database in the background, then update the schema file
 #   then build the latest image, then stop the database container
 build: update-static run-db-background update-schema
-	docker build -t kylecotton/sdp-backend:latest sdp-backend
+	docker build -t kylecotton/sdp-backend:`git log -1 --format=%h` sdp-backend
 	-docker stop `docker ps -aq`
 
 # Update the sqlx-data.json file, for this the database must be running
