@@ -8,6 +8,7 @@ push:
 # Run the entire backend system, if the sdp_backend image is not
 #  available locally it will be fetched from the docker hub.
 run:
+	export LAST_TAG=`sh LAST_TAG.sh`
 	docker-compose up
 
 # Run the database in the background, then update the schema file

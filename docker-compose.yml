@@ -16,7 +16,7 @@ services:
     - ./database/volume/dbx:/var/lib/postgresql/data
 
   sdp_backend:
-    image: kylecotton/sdp_backend:latest
+    image: kylecotton/sdp-backend:${LAST_TAG}
     ports:
       - "8000:8000"
     environment:
