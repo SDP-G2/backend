@@ -24,4 +24,4 @@ services:
       - DATABASE_URL=postgres://postgres:password@sdp_db/sdp
     container_name: sdp_backend
     volumes:
-      - ./sdp-backend/static:/usr/src/sdp-backend/static
+      - ./sdp-backend/static:/static
