@@ -8,6 +8,5 @@ then
     tags=` echo "${tags}" | grep "$2" `
 fi
 
-# echo "${tags}"
-tags=`echo "${tags}"| head -n 1`
+tags=`echo "${tags}"| tail -n 1`
 echo "${tags}"
