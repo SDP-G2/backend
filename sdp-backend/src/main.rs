@@ -33,7 +33,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Cors::default().allow_any_origin())
             .wrap(Logger::default())
             .data(database_pool.clone())
-            .service(actix_files::Files::new("/static", "static/").show_files_listing())
+            .service(actix_files::Files::new("/static", "/static").show_files_listing())
             .service(api::user::create_user)
             .service(api::command::create_command)
             .service(api::poll::robot_poll)
