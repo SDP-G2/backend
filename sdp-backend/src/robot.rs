@@ -9,7 +9,7 @@ pub struct Robot {
 }
 
 impl Robot {
-    pub async fn new(conn: &PgPool, robot_serial_number: &str) -> Result<(), ApiError> {
+    pub async fn new(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
         sqlx::query!(
             r#"
 INSERT INTO robot (robot_serial_number)
@@ -17,9 +17,15 @@ VALUES ($1)
         "#,
             &robot_serial_number
         )
-        .execute(conn)
+        .fetch_one(conn)
         .await
-        .map_err(|_| ApiError::RobotInitializationFailed)?;
+        .map(|_| Self {
+            robot_serial_number: robot_serial_number.to_string(),
+            assigned: false,
+        })
+        .map_err(|_| ApiError::RobotInitializationFailed)
+    }
+
 
         // By default a new robot will be in idle.
         // Command::idle(conn, robot_serial_number).await?;
