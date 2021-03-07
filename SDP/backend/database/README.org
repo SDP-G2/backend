@@ -1,0 +1,11 @@
+* Database README
+** Prerequisites
+- ~docker~ and ~docker-compose~ need to be installed
+- Inside the ~/database~ directory there needs to be a ~/database/volume~ directory.
+
+** Starting the DB Server
+- To start the server just run ~docker-compose up~
+- You will need to be in the same folder as the ~docker-compose.yml~ file
+
+** Stopping the DB Server
+- To stop the server just ~ctr-c~ on the terminal session where it is running
