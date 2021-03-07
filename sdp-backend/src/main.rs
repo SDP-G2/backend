@@ -39,6 +39,8 @@ async fn main() -> std::io::Result<()> {
             .service(api::poll::robot_poll)
             .service(api::auth::auth)
             .service(api::poll::robot_init)
+            // Admin Endpoints
+            .service(api::admin::create_robot)
     })
     .bind(address)?
     .run()
