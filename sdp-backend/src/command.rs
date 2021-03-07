@@ -1,11 +1,11 @@
-use crate::error::ApiError;
 use chrono::{serde::ts_seconds, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 
-// TODO: Set this to a sensible value
-const TIME_ISSUED_BUFFER: i64 = 1000;
-const TIME_INSTRUCTION_BUFFER: i64 = 1000;
+mod abort;
+mod create;
+mod retrieve;
+mod time;
+mod update;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Command {
@@ -16,7 +16,27 @@ pub struct Command {
     #[serde(with = "ts_seconds")]
     time_instruction: chrono::DateTime<Utc>,
     pub instruction: Instruction,
-    pub completed: bool,
+    pub status: Status,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum Status {
+    // A command that has been submitted to the system but not started
+    Pending,
+    // The command the robot is currently doing
+    InProgress,
+    // The command completed successfully
+    Completed,
+    // The command has been paused due to an obstacle
+    Paused,
+    // The command has beenc ancelled due to an abort
+    Cancelled,
+}
+
+impl Status {
+    pub fn cancelled(&self) -> bool {
+        self == &Self::Cancelled
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -24,261 +44,76 @@ pub enum CleaningPattern {
     ZigZag,
     Circular,
 }
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum AbortReason {
     LowBattery,
     Saftey,
-    Obstacle,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Instruction {
-    Continue,
-    Pause,
     Abort(AbortReason),
     Task(CleaningPattern),
     Idle,
 }
 
-impl Command {
-    pub async fn new(
-        conn: &PgPool,
-        robot_serial_number: &str,
-        time_issued: chrono::DateTime<Utc>,
-        time_instruction: chrono::DateTime<Utc>,
-        instruction: &Instruction,
-    ) -> Result<Command, ApiError> {
-        // Check that the commands was given within the
-        //   time buffer
-        let time_difference = (chrono::Utc::now() - time_issued).num_seconds().abs();
-        if time_difference > TIME_ISSUED_BUFFER {
-            println!(
-                "Error: Outside of the time buffer\nTime Diff: {}",
-                time_difference
-            );
-            return Err(ApiError::CommandNotInTimeIssuedBuffer);
-        }
+impl std::fmt::Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Instruction::{Abort, Idle, Task};
 
-        let instruction_json = serde_json::to_string(instruction).map_err(|e| {
-            println!("Instrution Json: {:?}", e);
-            ApiError::SerializationError
-        })?;
-
-        let command_id = sqlx::query!(
-            r#"
-        INSERT INTO Commands (robot_serial_number, time_issued, time_instruction, instruction)
-        VALUES ( $1, $2, $3, $4 )
-        RETURNING command_id
-                "#,
-            robot_serial_number,
-            time_issued,
-            time_instruction,
-            instruction_json
-        )
-        .fetch_one(conn)
-        .await
-        .map_err(|e| {
-            println!("Command New: {:?}", e);
-            ApiError::DatabaseConnFailed
-        })?
-        .command_id;
-
-        let robot_serial_number = robot_serial_number.to_string();
-
-        Ok(Self {
-            command_id,
-            robot_serial_number,
-            time_issued,
-            time_instruction,
-            instruction: instruction.clone(),
-            completed: false,
-        })
-    }
-
-    // Get the current task the robot is doing
-    pub async fn current(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
-        sqlx::query!(
-            r#"
-SELECT * FROM Commands C
-NATURAL JOIN
-(SELECT MIN(C1.time_instruction) AS time_instruction,
-        $1 AS robot_serial_number
-FROM Commands C1
-WHERE C1.robot_serial_number = $1 AND
-      C1.completed = false) MinTimeInstruction
-               "#,
-            robot_serial_number
-        )
-        .fetch_one(conn)
-        .await
-        .map(|cmd| Self {
-            command_id: cmd.command_id,
-            robot_serial_number: cmd.robot_serial_number,
-            time_issued: cmd.time_issued,
-            time_instruction: cmd.time_issued,
-            instruction: serde_json::from_str(&cmd.instruction)
-                .unwrap_or(Instruction::Abort(AbortReason::Saftey)),
-            completed: cmd.completed,
-        })
-        .map_err(|e| {
-            println!("Command Latest: {:?}", e);
-            ApiError::DatabaseConnFailed
-        })
-    }
-
-    /// Checks to see if there are any pending command for this robot
-    pub async fn pending(
-        conn: &PgPool,
-        robot_serial_number: &str,
-    ) -> Result<Option<Command>, ApiError> {
-        let mut pending_commands = Vec::new();
-        let all_cmd = Self::get_all_commands(conn, robot_serial_number).await?;
-
-        for cmd in &all_cmd {
-            if !cmd.completed {
-                pending_commands.push(cmd.clone());
+        match self {
+            Abort(AbortReason::LowBattery) => {
+                write!(f, "Abort(AbortReason::LowBattery)")
             }
+            Abort(AbortReason::Saftey) => write!(f, "Abort(AbortReason::Saftey)"),
+            Task(CleaningPattern::Circular) => {
+                write!(f, "Task(CleaningPattern::Circular)")
+            }
+            Task(CleaningPattern::ZigZag) => {
+                write!(f, "Task(CleaningPattern::ZigZag)")
+            }
+            Idle => write!(f, "Idle"),
         }
-
-        match pending_commands.get(0) {
-            Some(cmd) if cmd.valid_time_instruction() => Ok(Some(cmd.clone())),
-            _ => Ok(None),
-        }
-    }
-
-    pub async fn complete(&self, conn: &PgPool) -> Result<(), ApiError> {
-        sqlx::query!(
-            r#"
-UPDATE Commands C
-SET completed = true
-WHERE C.command_id= $1
-               "#,
-            self.command_id
-        )
-        .execute(conn)
-        .await
-        .map_err(|_| ApiError::DatabaseConnFailed)?;
-
-        Ok(())
-    }
-
-    pub fn valid_time_instruction(&self) -> bool {
-        let time_difference = (chrono::Utc::now() - self.time_instruction)
-            .num_seconds()
-            .abs();
-
-        time_difference < TIME_INSTRUCTION_BUFFER
     }
 }
 
-impl Command {
-    // Abort the current task with the given reason
-    pub async fn abort(
-        conn: &PgPool,
-        robot_serial_number: &str,
-        reason: &AbortReason,
-    ) -> Result<Self, ApiError> {
-        // Create a new command with the current time
-        let time_now = chrono::Utc::now();
+impl From<String> for Instruction {
+    fn from(instruction: String) -> Self {
+        use Instruction::{Abort, Idle, Task};
 
-        Ok(Command::new(
-            conn,
-            robot_serial_number,
-            time_now,
-            time_now,
-            &Instruction::Abort(reason.clone()),
-        )
-        .await?)
+        match &instruction[..] {
+            "Abort(AbortReason::LowBattery)" => Abort(AbortReason::LowBattery),
+            "Abort(AbortReason::Saftey)" => Abort(AbortReason::Saftey),
+            "Task(CleaningPattern::Circular)" => Task(CleaningPattern::Circular),
+            "Task(CleaningPattern::ZigZag)" => Task(CleaningPattern::ZigZag),
+            "Idle" => Idle,
+            _ => Abort(AbortReason::Saftey),
+        }
     }
-
-    // Idle task the current task with the given reason
-    pub async fn idle(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
-        // Create a new command with the current time
-        let time_now = chrono::Utc::now();
-
-        Ok(Command::new(
-            conn,
-            robot_serial_number,
-            time_now,
-            time_now,
-            &Instruction::Idle,
-        )
-        .await?)
-    }
-
-    // pub async fn task// (
-    //     conn: &PgPool,
-    //     robot_serial_number: &str,
-    //     cleaning_pattern: &CleaningPattern,
-    // )
-    // -> Result<Self, ApiError> // {
-    //     // Create a new command with the current time
-    //     let time_now = chrono::Utc::now();
-
-    //     Ok(Command::new(
-    //         conn,
-    //         robot_serial_number,
-    //         time_now,
-    //         time_now,
-    //         &Instruction::Task(cleaning_pattern.clone()),
-    //     )
-    //     .await?)
-    // }
 }
 
-impl Command {
-    pub async fn get_all_commands(
-        conn: &PgPool,
-        robot_serial_number: &str,
-    ) -> Result<Vec<Command>, ApiError> {
-        sqlx::query!(
-            r#"
-SELECT * FROM Commands C
-WHERE C.robot_serial_number = $1
-ORDER BY C.time_instruction DESC
-               "#,
-            robot_serial_number
-        )
-        .fetch_all(conn)
-        .await
-        .map(|cmds| {
-            let mut pending = Vec::new();
-
-            for c in cmds {
-                pending.push(Self {
-                    command_id: c.command_id,
-                    robot_serial_number: c.robot_serial_number,
-                    time_issued: c.time_issued,
-                    time_instruction: c.time_issued,
-                    instruction: serde_json::from_str(&c.instruction)
-                        .unwrap_or(Instruction::Abort(AbortReason::Saftey)),
-                    completed: c.completed,
-                })
-            }
-            pending
-        })
-        .map_err(|_| ApiError::DatabaseConnFailed)
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Status::Pending => write!(f, "Status::Pending"),
+            Status::InProgress => write!(f, "Status::InProgress"),
+            Status::Completed => write!(f, "Status::Completed"),
+            Status::Paused => write!(f, "Status::Paused"),
+            Status::Cancelled => write!(f, "Status::Cancelled"),
+        }
     }
+}
 
-    pub async fn get_by_id(conn: &PgPool, command_id: i64) -> Result<Command, ApiError> {
-        sqlx::query!(
-            r#"
-SELECT * FROM Commands C
-WHERE C.command_id = $1
-               "#,
-            command_id
-        )
-        .fetch_one(conn)
-        .await
-        .map(|c| Self {
-            command_id: c.command_id,
-            robot_serial_number: c.robot_serial_number,
-            time_issued: c.time_issued,
-            time_instruction: c.time_issued,
-            instruction: serde_json::from_str(&c.instruction)
-                .unwrap_or(Instruction::Abort(AbortReason::Saftey)),
-            completed: c.completed,
-        })
-        .map_err(|_| ApiError::DatabaseConnFailed)
+impl From<String> for Status {
+    fn from(status: String) -> Self {
+        match &status[..] {
+            "Status::Pending" => Status::Pending,
+            "Status::InProgress" => Status::InProgress,
+            "Status::Completed" => Status::Completed,
+            "Status::Paused" => Status::Paused,
+            "Status::Cancelled" => Status::Cancelled,
+            _ => Status::Cancelled,
+        }
     }
 }
