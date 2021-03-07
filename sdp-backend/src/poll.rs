@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 
-use crate::command::{
-    AbortReason, Command, Instruction,
-    Instruction::{Abort, Idle, Task},
-};
+use crate::command::Instruction::{Idle, Task};
+use crate::command::{Command, Status};
 use crate::error::ApiError;
 
 const MINIMUM_BATTERY_LEVEL: i64 = 50;
@@ -17,90 +15,44 @@ pub struct Poll {
     pub battery_level: i64,
 }
 
-impl Poll {
-    pub async fn poll(conn: &PgPool, robot_status: &Self) -> Result<Command, ApiError> {
-        let mut robot_status = robot_status.clone();
-
-        // Check the battery of the robot
-        if !robot_status.check_battery().await {
-            robot_status.instruction = Abort(AbortReason::LowBattery);
-        }
-
-        // Get the previous commands for the robot
-        let prev_command = Command::current(conn, &robot_status.robot_serial_number).await?;
-
-        // Get the pending command for the robot, if the pending is the same as the current
-        // task set it to None.
-        let pending_command =
-            match Command::pending(conn, &prev_command.robot_serial_number).await? {
-                Some(pending) if pending == prev_command => None,
-                Some(pending) => Some(pending),
-                _ => None,
-            };
-
-        // println!("\nPrev Command: {:?}\n", prev_command);
-        // println!("Pending Command: {:?}\n", pending_command);
-        // println!("Robot Status: {:?}\n", robot_status);
-
-        match (
-            &prev_command.instruction,
-            &pending_command,
-            &robot_status.instruction,
-        ) {
-            // If there are no pending commands, and the new robot state is the same as the last keep doing the previous task
-            (prev, None, new) if prev == new => {
-                // println!("--- OPTION 1 ---");
-                Ok(prev_command)
-            }
-
-            // Doing a task that has now completed, mark as complete and idle
-            (Task(_), None, Idle) => {
-                // println!("--- OPTION 2 ---");
-                prev_command.complete(conn).await.ok();
-                Command::idle(conn, &robot_status.robot_serial_number).await
-            }
-
-            // Doing a task that has now completed, mark as complete and do the pending task
-            (Task(_), Some(pending), Idle) => {
-                // println!("--- OPTION 3 ---");
-                prev_command.complete(conn).await.ok();
-                Ok(pending.clone())
-            }
-
-            // If the robot has aborted for some reason, mark the task as complete
-            // then abort
-            (_, _, Abort(reason)) => {
-                // println!("--- OPTION 4 ---");
-                prev_command.complete(conn).await.ok();
-                Command::abort(conn, &robot_status.robot_serial_number, reason).await
-            }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Init {
     pub robot_serial_number: String,
     pub battery_level: i64,
 }
 
-            // IF we are previously aborted, set the state to idle
-            (Abort(_), None, Idle) => {
-                // println!("--- OPTION 5 ---");
-                prev_command.complete(conn).await.ok();
-                Command::idle(conn, &robot_status.robot_serial_number).await
+impl Poll {
+    pub async fn poll(conn: &PgPool, poll: &Self) -> Result<Command, ApiError> {
+        // Get the current command from the database
+        let current_command = match Command::get_by_id(conn, poll.current_command_id).await {
+            Ok(c) if c.status.cancelled() => {
+                return Command::pending(conn, &poll.robot_serial_number)
+                    .await
+                    .map(|c| c.expect("The abort command should have been inserted"));
             }
+            Ok(c) => c,
+            Err(_) => return Err(ApiError::DatabaseConnFailed),
+        };
 
-            // IF we are previously aborted, set the state to idle
-            (Abort(_), Some(pending), Idle) => {
-                // println!("--- OPTION 6 ---");
-                prev_command.complete(conn).await.ok();
-                Ok(pending.clone())
+        match &current_command.instruction {
+            Task(_) => {
+                current_command
+                    .update_status(conn, &poll.current_command_status)
+                    .await
             }
-
-            (Idle, Some(pending), Idle) => {
-                // println!("--- OPTION 7 ---");
-                prev_command.complete(conn).await.ok();
-                Ok(pending.clone())
+            Idle if !poll.check_battery().await => current_command.low_battery_abort(conn).await,
+            Idle => {
+                // current_command.completed(conn).await
+                match Command::pending(conn, &poll.robot_serial_number).await? {
+                    Some(cmd) => {
+                        current_command.completed(conn).await?;
+                        cmd.in_progress(conn).await?;
+                        Ok(cmd)
+                    }
+                    None => Ok(current_command),
+                }
             }
-
-            _ => Err(ApiError::CmdInstructionNotSupported),
+            _unsupported => Err(ApiError::CmdInstructionNotSupported),
         }
     }
 
