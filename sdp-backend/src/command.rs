@@ -3,9 +3,7 @@ use chrono::{serde::ts_seconds, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 
-// TODO: Set this to a sensible value
-const TIME_ISSUED_BUFFER: i64 = 1000;
-const TIME_INSTRUCTION_BUFFER: i64 = 1000;
+mod time;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Command {
