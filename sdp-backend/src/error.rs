@@ -13,6 +13,7 @@ pub enum ApiError {
     RobotInitializationFailed,
     SerializationError,
     AuthenticationFailed,
+    RobotAlreadyAssigned,
 }
 
 impl fmt::Display for ApiError {
@@ -41,6 +42,7 @@ impl From<ApiError> for HttpResponse {
             ApiError::RobotInitializationFailed => HttpResponse::BadRequest().json(error_json),
             ApiError::SerializationError => HttpResponse::InternalServerError().json(error_json),
             ApiError::AuthenticationFailed => HttpResponse::Unauthorized().json(error_json),
+            ApiError::RobotAlreadyAssigned => HttpResponse::BadRequest().json(error_json),
         }
     }
 }
