@@ -58,13 +58,38 @@ pub enum Instruction {
     Idle,
 }
 
+impl std::fmt::Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Instruction::{Abort, Idle, Task};
 
+        match self {
+            Abort(AbortReason::LowBattery) => {
+                write!(f, "Abort(AbortReason::LowBattery)")
             }
+            Abort(AbortReason::Saftey) => write!(f, "Abort(AbortReason::Saftey)"),
+            Task(CleaningPattern::Circular) => {
+                write!(f, "Task(CleaningPattern::Circular)")
+            }
+            Task(CleaningPattern::ZigZag) => {
+                write!(f, "Task(CleaningPattern::ZigZag)")
+            }
+            Idle => write!(f, "Idle"),
         }
     }
 }
 
+impl From<String> for Instruction {
+    fn from(instruction: String) -> Self {
+        use Instruction::{Abort, Idle, Task};
 
+        match &instruction[..] {
+            "Abort(AbortReason::LowBattery)" => Abort(AbortReason::LowBattery),
+            "Abort(AbortReason::Saftey)" => Abort(AbortReason::Saftey),
+            "Task(CleaningPattern::Circular)" => Task(CleaningPattern::Circular),
+            "Task(CleaningPattern::ZigZag)" => Task(CleaningPattern::ZigZag),
+            "Idle" => Idle,
+            _ => Abort(AbortReason::Saftey),
+        }
     }
 }
 
