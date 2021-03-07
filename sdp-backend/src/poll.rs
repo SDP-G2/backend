@@ -12,7 +12,8 @@ const MINIMUM_BATTERY_LEVEL: i64 = 50;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Poll {
     pub robot_serial_number: String,
-    pub instruction: Instruction,
+    pub current_command_id: i64,
+    pub current_command_status: Status,
     pub battery_level: i64,
 }
 
