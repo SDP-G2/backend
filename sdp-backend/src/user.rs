@@ -25,7 +25,12 @@ impl User {
 
         let password_hash = hash(password, DEFAULT_COST).map_err(|_| ApiError::HashingFailed)?;
 
-        Robot::new(conn, &robot_serial_number).await?;
+        // When creating a user, we get the robot and check if has already been assigned
+        // If is has return an error, otherwise assign it now.
+        Robot::get_by_serial(conn, &robot_serial_number)
+            .await?
+            .assign(conn)
+            .await?;
 
         let user_id = sqlx::query!(
             r#"

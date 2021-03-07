@@ -37,7 +37,7 @@ impl Token {
 
         encode(&headers, &claims, &encoding_key)
             .map(|token| Token { token })
-            .map_err(|_| ApiError::DatabaseConnFailed)
+            .map_err(|_| ApiError::AuthenticationFailed)
     }
 
     pub async fn validate(&self, conn: &PgPool) -> Result<User, ApiError> {
@@ -66,7 +66,7 @@ impl FromRequest for User {
     fn from_request(req: &HttpRequest, payload: &mut dev::Payload) -> Self::Future {
         let conn = match Data::<PgPool>::from_request(req, payload).into_inner() {
             Ok(d) => d,
-            _ => return Box::pin(async { Err(ApiError::DatabaseConnFailed) }),
+            _ => return Box::pin(async { Err(ApiError::AuthenticationFailed) }),
         };
 
         // Get the headers from the request
@@ -79,7 +79,7 @@ impl FromRequest for User {
             Some(Ok(t)) => Token {
                 token: t.to_string(),
             },
-            _ => return Box::pin(async { Err(ApiError::DatabaseConnFailed) }),
+            _ => return Box::pin(async { Err(ApiError::AuthenticationFailed) }),
         };
 
         Box::pin(async move { token.validate(&conn).await })

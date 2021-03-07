@@ -34,10 +34,18 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .data(database_pool.clone())
             .service(actix_files::Files::new("/static", "/static").show_files_listing())
+            // User Endpoints
             .service(api::user::create_user)
+            // Command Endpoints
             .service(api::command::create_command)
-            .service(api::poll::robot_poll)
+            .service(api::command::get_command)
+            .service(api::command::cancel_command)
             .service(api::auth::auth)
+            // Robot Endpoints
+            .service(api::poll::robot_poll)
+            .service(api::poll::robot_init)
+            // Admin Endpoints
+            .service(api::admin::create_robot)
     })
     .bind(address)?
     .run()

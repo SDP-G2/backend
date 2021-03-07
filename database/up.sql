@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS Robot (
        robot_serial_number VARCHAR PRIMARY KEY,
-       battery_level BIGINT NOT NULL DEFAULT 0
+       assigned BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS Users (
@@ -16,5 +16,5 @@ CREATE TABLE IF NOT EXISTS Commands (
        time_issued timestamptz NOT NULL,
        time_instruction timestamptz NOT NULL,
        instruction VARCHAR NOT NULL,
-       completed boolean NOT NULL DEFAULT FALSE
+       status VARCHAR NOT NULL DEFAULT 'Status::Pending'
 );
