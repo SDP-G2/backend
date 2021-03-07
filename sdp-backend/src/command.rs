@@ -39,60 +39,6 @@ pub enum Instruction {
 }
 
 impl Command {
-    pub async fn new(
-        conn: &PgPool,
-        robot_serial_number: &str,
-        time_issued: chrono::DateTime<Utc>,
-        time_instruction: chrono::DateTime<Utc>,
-        instruction: &Instruction,
-    ) -> Result<Command, ApiError> {
-        // Check that the commands was given within the
-        //   time buffer
-        let time_difference = (chrono::Utc::now() - time_issued).num_seconds().abs();
-        if time_difference > TIME_ISSUED_BUFFER {
-            println!(
-                "Error: Outside of the time buffer\nTime Diff: {}",
-                time_difference
-            );
-            return Err(ApiError::CommandNotInTimeIssuedBuffer);
-        }
-
-        let instruction_json = serde_json::to_string(instruction).map_err(|e| {
-            println!("Instrution Json: {:?}", e);
-            ApiError::SerializationError
-        })?;
-
-        let command_id = sqlx::query!(
-            r#"
-        INSERT INTO Commands (robot_serial_number, time_issued, time_instruction, instruction)
-        VALUES ( $1, $2, $3, $4 )
-        RETURNING command_id
-                "#,
-            robot_serial_number,
-            time_issued,
-            time_instruction,
-            instruction_json
-        )
-        .fetch_one(conn)
-        .await
-        .map_err(|e| {
-            println!("Command New: {:?}", e);
-            ApiError::DatabaseConnFailed
-        })?
-        .command_id;
-
-        let robot_serial_number = robot_serial_number.to_string();
-
-        Ok(Self {
-            command_id,
-            robot_serial_number,
-            time_issued,
-            time_instruction,
-            instruction: instruction.clone(),
-            completed: false,
-        })
-    }
-
     // Get the current task the robot is doing
     pub async fn current(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
         sqlx::query!(
@@ -189,39 +135,7 @@ impl Command {
         .await?)
     }
 
-    // Idle task the current task with the given reason
-    pub async fn idle(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
-        // Create a new command with the current time
-        let time_now = chrono::Utc::now();
-
-        Ok(Command::new(
-            conn,
-            robot_serial_number,
-            time_now,
-            time_now,
-            &Instruction::Idle,
-        )
-        .await?)
     }
-
-    // pub async fn task// (
-    //     conn: &PgPool,
-    //     robot_serial_number: &str,
-    //     cleaning_pattern: &CleaningPattern,
-    // )
-    // -> Result<Self, ApiError> // {
-    //     // Create a new command with the current time
-    //     let time_now = chrono::Utc::now();
-
-    //     Ok(Command::new(
-    //         conn,
-    //         robot_serial_number,
-    //         time_now,
-    //         time_now,
-    //         &Instruction::Task(cleaning_pattern.clone()),
-    //     )
-    //     .await?)
-    // }
 }
 
 impl Command {
