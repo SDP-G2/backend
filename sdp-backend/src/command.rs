@@ -93,7 +93,27 @@ impl From<String> for Instruction {
     }
 }
 
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Status::Pending => write!(f, "Status::Pending"),
+            Status::InProgress => write!(f, "Status::InProgress"),
+            Status::Completed => write!(f, "Status::Completed"),
+            Status::Paused => write!(f, "Status::Paused"),
+            Status::Cancelled => write!(f, "Status::Cancelled"),
+        }
     }
+}
 
+impl From<String> for Status {
+    fn from(status: String) -> Self {
+        match &status[..] {
+            "Status::Pending" => Status::Pending,
+            "Status::InProgress" => Status::InProgress,
+            "Status::Completed" => Status::Completed,
+            "Status::Paused" => Status::Paused,
+            "Status::Cancelled" => Status::Cancelled,
+            _ => Status::Cancelled,
+        }
     }
 }
