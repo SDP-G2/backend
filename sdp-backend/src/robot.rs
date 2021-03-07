@@ -2,7 +2,11 @@ use crate::command::Command;
 use crate::error::ApiError;
 use sqlx::postgres::PgPool;
 
-pub struct Robot;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Robot {
+    pub robot_serial_number: String,
+    pub assigned: bool,
+}
 
 impl Robot {
     pub async fn new(conn: &PgPool, robot_serial_number: &str) -> Result<(), ApiError> {
