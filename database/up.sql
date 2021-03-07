@@ -16,5 +16,5 @@ CREATE TABLE IF NOT EXISTS Commands (
        time_issued timestamptz NOT NULL,
        time_instruction timestamptz NOT NULL,
        instruction VARCHAR NOT NULL,
-       completed boolean NOT NULL DEFAULT FALSE
+       status VARCHAR NOT NULL DEFAULT 'Status::Pending'
 );
