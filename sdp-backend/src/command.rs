@@ -44,25 +44,6 @@ pub enum Instruction {
     }
 }
 
-impl Command {
-    // Abort the current task with the given reason
-    pub async fn abort(
-        conn: &PgPool,
-        robot_serial_number: &str,
-        reason: &AbortReason,
-    ) -> Result<Self, ApiError> {
-        // Create a new command with the current time
-        let time_now = chrono::Utc::now();
-
-        Ok(Command::new(
-            conn,
-            robot_serial_number,
-            time_now,
-            time_now,
-            &Instruction::Abort(reason.clone()),
-        )
-        .await?)
-    }
 
     }
 }
