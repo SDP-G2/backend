@@ -41,17 +41,15 @@ pub enum CleaningPattern {
     ZigZag,
     Circular,
 }
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum AbortReason {
     LowBattery,
     Saftey,
-    Obstacle,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Instruction {
-    Continue,
-    Pause,
     Abort(AbortReason),
     Task(CleaningPattern),
     Idle,
