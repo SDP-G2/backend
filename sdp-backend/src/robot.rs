@@ -1,5 +1,5 @@
-use crate::command::Command;
 use crate::error::ApiError;
+use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -43,9 +43,26 @@ WHERE R.robot_serial_number = $1
         .map_err(|_| ApiError::DatabaseConnFailed)
     }
 
-        // By default a new robot will be in idle.
-        // Command::idle(conn, robot_serial_number).await?;
+    // Assigning the robot to a user, making assigned true
+    pub async fn assign(&self, conn: &PgPool) -> Result<Self, ApiError> {
+        // Check if the robot already assigned
+        // If it is return an error
+        if self.assigned {
+            return Err(ApiError::RobotAlreadyAssigned);
+        }
 
-        Ok(())
+        sqlx::query!(
+            r#"
+UPDATE Robot
+SET assigned = TRUE
+WHERE robot_serial_number = $1
+               "#,
+            self.robot_serial_number
+        )
+        .execute(conn)
+        .await
+        .map_err(|_| ApiError::DatabaseConnFailed)?;
+
+        Self::get_by_serial(conn, &self.robot_serial_number).await
     }
 }
