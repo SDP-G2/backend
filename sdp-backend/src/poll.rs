@@ -74,6 +74,11 @@ impl Poll {
                 prev_command.complete(conn).await.ok();
                 Command::abort(conn, &robot_status.robot_serial_number, reason).await
             }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Init {
+    pub robot_serial_number: String,
+    pub battery_level: i64,
+}
 
             // IF we are previously aborted, set the state to idle
             (Abort(_), None, Idle) => {
@@ -107,5 +112,24 @@ impl Poll {
         self.battery_level >= 0
             && self.battery_level > MINIMUM_BATTERY_LEVEL
             && self.battery_level <= 100
+    }
+}
+
+// When the robot first turns on it will have no knowledge of previous communications
+impl Init {
+    pub async fn init(conn: &PgPool, init: &Self) -> Result<Command, ApiError> {
+        let polling_command = match Command::pending(conn, &init.robot_serial_number).await? {
+            Some(c) => c,
+            None => Command::new_idle(conn, &init.robot_serial_number).await?,
+        };
+
+        let poll = Poll {
+            robot_serial_number: init.robot_serial_number.clone(),
+            current_command_id: polling_command.command_id,
+            current_command_status: polling_command.status,
+            battery_level: init.battery_level,
+        };
+
+        Poll::poll(conn, &poll).await
     }
 }
