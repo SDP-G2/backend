@@ -4,7 +4,8 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ApiError {
-    CommandNotInTimeIssuedBuffer,
+    InvalidTimeIssued,
+    InvalidTimeInstruction,
     DatabaseConnFailed,
     HashingFailed,
     LoginFailedUserNotExist,
@@ -33,7 +34,8 @@ impl From<ApiError> for HttpResponse {
 
         // Give an appropiate error code for the error.
         match error {
-            ApiError::CommandNotInTimeIssuedBuffer => HttpResponse::BadRequest().json(error_json),
+            ApiError::InvalidTimeIssued => HttpResponse::BadRequest().json(error_json),
+            ApiError::InvalidTimeInstruction => HttpResponse::BadRequest().json(error_json),
             ApiError::DatabaseConnFailed => HttpResponse::InternalServerError().json(error_json),
             ApiError::HashingFailed => HttpResponse::InternalServerError().json(error_json),
             ApiError::LoginFailedUserNotExist => HttpResponse::Unauthorized().json(error_json),
