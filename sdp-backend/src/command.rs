@@ -34,6 +34,11 @@ pub enum Status {
     // The command has beenc ancelled due to an abort
     Cancelled,
 }
+
+impl Status {
+    pub fn cancelled(&self) -> bool {
+        self == &Self::Cancelled
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
