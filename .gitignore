@@ -1,2 +1,6 @@
 sdp-backend/target/**
 sdp-backend/static/**
+**.DS_Store
+**/volume/**
+static/**
+.env
