@@ -41,17 +41,17 @@ impl Poll {
                     .await
             }
             Idle if !poll.check_battery().await => current_command.low_battery_abort(conn).await,
-            Idle => {
-                // current_command.completed(conn).await
-                match Command::pending(conn, &poll.robot_serial_number).await? {
-                    Some(cmd) => {
-                        current_command.completed(conn).await?;
-                        cmd.in_progress(conn).await?;
-                        Ok(cmd)
-                    }
-                    None => Ok(current_command),
+            Idle => match Command::pending(conn, &poll.robot_serial_number).await? {
+                // There is a pennding command, mark the current command as completed
+                // then start the other task and return it
+                Some(cmd) => {
+                    current_command.completed(conn).await?;
+                    cmd.in_progress(conn).await?;
+                    Ok(cmd)
                 }
-            }
+                // There are no commands pending, keep doing the idle command
+                None => Ok(current_command),
+            },
             _unsupported => Err(ApiError::CmdInstructionNotSupported),
         }
     }
