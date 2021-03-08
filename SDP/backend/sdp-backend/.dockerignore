@@ -1,5 +1,0 @@
-target/**
-.env
-Dockerfile
-.DS_Store
-Cargo.lock
