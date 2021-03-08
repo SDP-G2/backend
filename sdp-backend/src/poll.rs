@@ -31,7 +31,7 @@ impl Poll {
                     .map(|c| c.expect("The abort command should have been inserted"));
             }
             Ok(c) => c,
-            Err(_) => return Err(ApiError::DatabaseConnFailed),
+            Err(e) => return Err(e),
         };
 
         match &current_command.instruction {
