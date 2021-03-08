@@ -12,10 +12,11 @@ impl Robot {
     pub async fn new(conn: &PgPool, robot_serial_number: &str) -> Result<Self, ApiError> {
         sqlx::query!(
             r#"
-INSERT INTO robot (robot_serial_number)
+INSERT INTO Robot (robot_serial_number)
 VALUES ($1)
+RETURNING robot_serial_number
         "#,
-            &robot_serial_number
+            &robot_serial_number,
         )
         .fetch_one(conn)
         .await
