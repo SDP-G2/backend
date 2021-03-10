@@ -10,8 +10,8 @@ const MINIMUM_BATTERY_LEVEL: i64 = 50;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Poll {
     pub robot_serial_number: String,
-    pub current_command_id: i64,
-    pub current_command_status: Status,
+    pub command_id: i64,
+    pub status: Status,
     pub battery_level: i64,
 }
 
@@ -24,7 +24,7 @@ pub struct Init {
 impl Poll {
     pub async fn poll(conn: &PgPool, poll: &Self) -> Result<Command, ApiError> {
         // Get the current command from the database
-        let current_command = match Command::get_by_id(conn, poll.current_command_id).await {
+        let current_command = match Command::get_by_id(conn, poll.command_id).await {
             Ok(c) if c.status.cancelled() => {
                 return Command::pending(conn, &poll.robot_serial_number)
                     .await
