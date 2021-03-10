@@ -34,6 +34,56 @@
       ]
     }
   },
+  "338f68640fca5f87de8a715c9b8b01287aeb2436b7c47903ac43990e7625aea5": {
+    "query": "\nSELECT * FROM Commands C\nWHERE C.robot_serial_number = $1 AND\n     (C.status = 'Status::Paused' OR C.status = 'Status::InProgress')\n               ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "command_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "robot_serial_number",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "time_issued",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "time_instruction",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 4,
+          "name": "instruction",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "status",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "612bfb287e125bf6dffeba42870ceff48a65b2320f9a832a212853a373c31fd6": {
     "query": "\n        UPDATE Commands C\n        SET robot_serial_number = $1,\n        time_issued = $2,\n        time_instruction = $3,\n        instruction = $4,\n        status = $5\n        WHERE C.command_id = $6\n\n                        ",
     "describe": {
