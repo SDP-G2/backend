@@ -3,7 +3,7 @@ mod tests {
     use crate::command::Command;
     use crate::command::{
         AbortReason,
-        AbortReason::{LowBattery, Obstacle, Saftey},
+        AbortReason::{LowBattery, Obstacle, Safety},
         CleaningPattern,
         CleaningPattern::{Circular, ZigZag},
         Instruction,

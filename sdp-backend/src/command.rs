@@ -52,7 +52,7 @@ pub enum CleaningPattern {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum AbortReason {
     LowBattery,
-    Saftey,
+    Safety,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -70,7 +70,7 @@ impl std::fmt::Display for Instruction {
             Abort(AbortReason::LowBattery) => {
                 write!(f, "Abort(AbortReason::LowBattery)")
             }
-            Abort(AbortReason::Saftey) => write!(f, "Abort(AbortReason::Saftey)"),
+            Abort(AbortReason::Safety) => write!(f, "Abort(AbortReason::Safety)"),
             Task(CleaningPattern::Circular) => {
                 write!(f, "Task(CleaningPattern::Circular)")
             }
@@ -88,11 +88,11 @@ impl From<String> for Instruction {
 
         match &instruction[..] {
             "Abort(AbortReason::LowBattery)" => Abort(AbortReason::LowBattery),
-            "Abort(AbortReason::Saftey)" => Abort(AbortReason::Saftey),
+            "Abort(AbortReason::Safety)" => Abort(AbortReason::Safety),
             "Task(CleaningPattern::Circular)" => Task(CleaningPattern::Circular),
             "Task(CleaningPattern::ZigZag)" => Task(CleaningPattern::ZigZag),
             "Idle" => Idle,
-            _ => Abort(AbortReason::Saftey),
+            _ => Abort(AbortReason::Safety),
         }
     }
 }

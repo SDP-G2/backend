@@ -16,7 +16,7 @@ impl Command {
             robot_serial_number,
             time_now,
             time_now,
-            &Instruction::Abort(AbortReason::Saftey),
+            &Instruction::Abort(AbortReason::Safety),
             &Status::InProgress,
         )
         .await

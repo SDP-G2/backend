@@ -66,8 +66,8 @@ impl Command {
         time_instruction: Vec<chrono::DateTime<Utc>>,
         instruction: &Instruction,
     ) -> Result<Vec<Command>, ApiError> {
-        // Check if the command is a SafteyAbort
-        if instruction == &Instruction::Abort(AbortReason::Saftey) {
+        // Check if the command is a SafetyAbort
+        if instruction == &Instruction::Abort(AbortReason::Safety) {
             return Ok(vec![
                 Command::saftey_abort(conn, robot_serial_number).await?,
             ]);
