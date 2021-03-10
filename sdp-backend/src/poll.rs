@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 
-use crate::command::Instruction::{Idle, Task};
+use crate::command::Instruction::{Abort, Idle, Task};
 use crate::command::{Command, Status};
 use crate::error::ApiError;
 
@@ -67,6 +67,9 @@ impl Poll {
                 }
                 None => Ok(current_command),
             },
+
+            // If we get the Abort instruction, just update the status of the command
+            Abort(_) => current_command.update_status(conn, &poll.status).await,
             _unsupported => Err(ApiError::CmdInstructionNotSupported),
         }
     }
