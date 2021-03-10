@@ -37,6 +37,10 @@ impl Status {
     pub fn cancelled(&self) -> bool {
         self == &Self::Cancelled
     }
+
+    pub fn is_completed(&self) -> bool {
+        self == &Self::Completed
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
