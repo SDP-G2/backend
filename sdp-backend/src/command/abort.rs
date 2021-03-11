@@ -17,7 +17,7 @@ impl Command {
             time_now,
             time_now,
             &Instruction::Abort(AbortReason::Safety),
-            &Status::InProgress,
+            &Status::Pending,
         )
         .await
     }
@@ -37,7 +37,7 @@ impl Command {
             time_now,
             time_now,
             &Instruction::Abort(AbortReason::LowBattery),
-            &Status::InProgress,
+            &Status::Pending,
         )
         .await
     }
