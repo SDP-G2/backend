@@ -17,7 +17,7 @@ WHERE C.command_id = $1
             command_id: c.command_id,
             robot_serial_number: c.robot_serial_number,
             time_issued: c.time_issued,
-            time_instruction: c.time_issued,
+            time_instruction: c.time_instruction,
             instruction: c.instruction.into(),
             status: c.status.into(),
         })
@@ -47,7 +47,7 @@ WHERE C.robot_serial_number = $1 AND
                 command_id: c.command_id,
                 robot_serial_number: c.robot_serial_number,
                 time_issued: c.time_issued,
-                time_instruction: c.time_issued,
+                time_instruction: c.time_instruction,
                 instruction: c.instruction.into(),
                 status: c.status.into(),
             })
@@ -127,7 +127,7 @@ WHERE C.robot_serial_number = $1 AND
                 command_id: c.command_id,
                 robot_serial_number: c.robot_serial_number,
                 time_issued: c.time_issued,
-                time_instruction: c.time_issued,
+                time_instruction: c.time_instruction,
                 instruction: c.instruction.into(),
                 status: c.status.into(),
             })
