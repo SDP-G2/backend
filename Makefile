@@ -50,7 +50,7 @@ connect-db:
 
 # Create the tables in the database
 migrations-run:
-	psql -U postgres -d sdp -h localhost --single-transaction -a -f database/up.sql
+	psql -U postgres -d sdp -h localhost --single-transaction -a -f database/up.sql -f database/robots.sql
 
 # Drop all of the tables in the database
 migrations-reset:
