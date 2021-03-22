@@ -4,6 +4,7 @@ use sqlx::postgres::PgPool;
 use crate::command::Instruction::{Abort, Idle, Task};
 use crate::command::{Command, Status};
 use crate::error::ApiError;
+use crate::robot::Robot;
 
 const MINIMUM_BATTERY_LEVEL: i64 = 50;
 
@@ -23,6 +24,9 @@ pub struct Init {
 
 impl Poll {
     pub async fn poll(conn: &PgPool, poll: &Self) -> Result<Command, ApiError> {
+        // Update the battery value stored in the database
+        Robot::set_battery(conn, &poll.robot_serial_number, poll.battery_level).await?;
+
         // Get the current command from the database
         let current_command = match Command::get_by_id(conn, poll.command_id).await {
             Ok(c) if c.status.cancelled() => {

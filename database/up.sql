@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS Robot (
        robot_serial_number VARCHAR PRIMARY KEY,
+       battery_level BIGINT NOT NULL DEFAULT 0,
        assigned BOOLEAN NOT NULL DEFAULT FALSE
 );
 
