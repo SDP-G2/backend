@@ -36,6 +36,7 @@ async fn main() -> std::io::Result<()> {
             .service(actix_files::Files::new("/static", "/static").show_files_listing())
             // User Endpoints
             .service(api::user::create_user)
+            .service(api::user::user_status)
             // Command Endpoints
             .service(api::command::create_command)
             .service(api::command::get_command)
