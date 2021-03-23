@@ -69,3 +69,8 @@ wipe-database:
 set-env:
 	export PORT=8080
 	export DATABASE_URL=postgres://postgres:password@localhost/sdp
+
+# --- SETUP ---
+# Perform all of the required setup before we can start the backend
+setup: run-db-background migrations-run
+		-docker stop `docker ps -aq`
