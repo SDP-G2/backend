@@ -151,6 +151,19 @@
       ]
     }
   },
+  "85979540b8a51ebed43dc61853de6ddea38c054690665d8011de564d81a730d2": {
+    "query": "\nUPDATE Robot\nSET battery_level = $2\nWHERE robot_serial_number = $1\n               ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "8c3f3a118220221bfb049a1fc3c2386839d301fd730ad95218eff11c62952286": {
     "query": "\nSELECT * FROM Commands C\nWHERE C.command_id = $1\n               ",
     "describe": {
@@ -212,6 +225,11 @@
         },
         {
           "ordinal": 1,
+          "name": "battery_level",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 2,
           "name": "assigned",
           "type_info": "Bool"
         }
@@ -222,6 +240,7 @@
         ]
       },
       "nullable": [
+        false,
         false,
         false
       ]
