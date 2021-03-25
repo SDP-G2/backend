@@ -1,6 +1,4 @@
-use actix_cors::Cors;
 use actix_web::{middleware::Logger, App, HttpServer};
-use sqlx::postgres::PgPool;
 use std::env;
 
 mod api;
@@ -24,16 +22,15 @@ async fn main() -> std::io::Result<()> {
     let address = format!("0.0.0.0:{}", port);
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL to be set");
-    let database_pool = PgPool::connect(&database_url)
+    let database_pool = sqlx::postgres::PgPool::connect(&database_url)
         .await
         .expect("to get database pool");
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Cors::default().allow_any_origin())
+            .wrap(actix_cors::Cors::default().allow_any_origin())
             .wrap(Logger::default())
             .data(database_pool.clone())
-            .service(actix_files::Files::new("static", "static").show_files_listing())
             // User Endpoints
             .service(api::user::create_user)
             .service(api::user::user_status)
@@ -47,6 +44,8 @@ async fn main() -> std::io::Result<()> {
             .service(api::poll::robot_init)
             // Admin Endpoints
             .service(api::admin::create_robot)
+            // Static Files Endpoint
+            .service(actix_files::Files::new("/static", "/static").show_files_listing())
     })
     .bind(address)?
     .run()
