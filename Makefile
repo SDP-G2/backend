@@ -8,6 +8,20 @@ push:
 # Run the entire backend system, if the sdp_backend image is not
 #  available locally it will be fetched from the docker hub.
 run:
+	LAST_TAG=`python last_tag.py` docker-compose up -d
+
+# Stop the entire backend system
+stop:
+	docker-compose down
+
+# Print the logs for the entire backend system
+logs:
+	docker-compose logs
+
+# Run the entire backend system, if the sdp_backend image is not
+#  available locally it will be fetched from the docker hub.
+# Run the system in the foreground
+run-fg:
 	LAST_TAG=`python last_tag.py` docker-compose up
 
 # Run the database in the background, then update the schema file
@@ -43,6 +57,9 @@ run-db:
 run-db-background:
 	docker-compose up -d sdp_db
 
+# Stop all runninng containers
+stop-db-background:
+	-docker stop `docker ps -aq`
 
 # Connect to the running database
 connect-db:
@@ -72,5 +89,4 @@ set-env:
 
 # --- SETUP ---
 # Perform all of the required setup before we can start the backend
-setup: run-db-background migrations-run
-		-docker stop `docker ps -aq`
+setup: run-db-background migrations-run stop-db-background
