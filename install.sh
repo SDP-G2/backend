@@ -1,7 +1,7 @@
 # install: deps docker compose src
 
 # deps:
-sudo apt install git python curl
+sudo apt install git python curl postgresql
 sudo systemctl stop postgresql
 # docker:
 curl -fsSL https://get.docker.com -o get-docker.sh
