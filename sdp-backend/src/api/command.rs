@@ -61,8 +61,8 @@ pub async fn get_command(conn: Data<PgPool>, user: User, req: HttpRequest) -> Ht
             }
         }
 
-        // Get all of the pending commands for this robot_serial_number
-        (_, Some(rsn)) => match Command::get_all_pending(&conn, &rsn).await {
+        // Get all of the commands for this robot_serial_number
+        (_, Some(rsn)) => match Command::get_all_by_robot_serial_number(&conn, &rsn).await {
             _ if rsn != user.robot_serial_number => ApiError::AuthenticationFailed.into(),
             Ok(cs) => HttpResponse::Ok().json(cs),
             Err(e) => e.into(),

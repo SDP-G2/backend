@@ -161,4 +161,36 @@ WHERE C.robot_serial_number = $1 AND
                 .await?),
         }
     }
+
+    pub async fn get_all_by_robot_serial_number(
+        conn: &PgPool,
+        robot_serial_number: &str,
+    ) -> Result<Vec<Command>, ApiError> {
+        let results = sqlx::query!(
+            r#"
+SELECT * FROM Commands C
+WHERE C.robot_serial_number = $1
+               "#,
+            robot_serial_number.clone(),
+        )
+        .fetch_one(conn)
+        .await
+        .map_err(|_| ApiError::DatabaseConnFailed);
+
+        let mut commands = Vec::new();
+        for r in results {
+            let command = Self {
+                command_id: r.command_id,
+                robot_serial_number: r.robot_serial_number,
+                time_issued: r.time_issued,
+                time_instruction: r.time_instruction,
+                instruction: r.instruction.into(),
+                status: r.status.into(),
+            };
+
+            commands.push(command);
+        }
+
+        Ok(commands)
+    }
 }
