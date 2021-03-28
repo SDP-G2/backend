@@ -1,5 +1,55 @@
 {
   "db": "PostgreSQL",
+  "0bc625568fde0046f7510b29ba32091ed78dd21572830c6e3b2e87ee70a249f9": {
+    "query": "\nSELECT * FROM Commands C\nWHERE C.robot_serial_number = $1\n               ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "command_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "robot_serial_number",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "time_issued",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "time_instruction",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 4,
+          "name": "instruction",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "status",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "2252b14b7c34c89a0fe460f9f00b70e6d17bff74704e26af59090c919d10c29b": {
     "query": "\nUPDATE Robot\nSET assigned = TRUE\nWHERE robot_serial_number = $1\n               ",
     "describe": {
