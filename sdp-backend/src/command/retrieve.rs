@@ -173,24 +173,23 @@ WHERE C.robot_serial_number = $1
                "#,
             robot_serial_number.clone(),
         )
-        .fetch_one(conn)
+        .fetch_all(conn)
         .await
-        .map_err(|_| ApiError::DatabaseConnFailed);
+        .map_err(|_| ApiError::DatabaseConnFailed)?;
+
+        println!("Results {:?}", results);
 
         let mut commands = Vec::new();
         for r in results {
-            let command = Self {
+            commands.push(Self {
                 command_id: r.command_id,
                 robot_serial_number: r.robot_serial_number,
                 time_issued: r.time_issued,
                 time_instruction: r.time_instruction,
                 instruction: r.instruction.into(),
                 status: r.status.into(),
-            };
-
-            commands.push(command);
+            });
         }
-
         Ok(commands)
     }
 }
